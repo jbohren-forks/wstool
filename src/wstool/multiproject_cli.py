@@ -666,7 +666,7 @@ $ roslocate info robot_model | %(prog)s merge -
         :param target_path: where to look for config
         :param config: config to use instead of parsing file anew
         """
-        usage = ("usage: %s set [localname] [SCM-URI]?  [--(%ssvn|hg|git|bzr)] [--version=VERSION]]" %
+        usage = ("usage: %s set [localname] [[SCM-URI] --(%ssvn|hg|git|bzr) [--version=VERSION]?]?" %
                  (self.progname, 'detached|' if self.allow_other_element else ''))
         parser = OptionParser(
             usage=usage,
@@ -1026,6 +1026,10 @@ $ %(prog)s info --only=path,cur_uri,cur_revision robot_model geometry
             "-t", "--target-workspace", dest="workspace", default=None,
             help="which workspace to use",
             action="store")
+        parser.add_option(
+            "-m", "--managed-only", dest="unmanaged", default=True,
+            help="only show managed elements",
+            action="store_false")
         (options, args) = parser.parse_args(argv)
 
         if config is None:
@@ -1074,5 +1078,15 @@ $ %(prog)s info --only=path,cur_uri,cur_revision robot_model geometry
                                reverse=reverse)
         if table is not None and table != '':
            print("\n%s" % table)
+
+        if options.unmanaged:
+            outputs2 = multiproject_cmd.cmd_find_unmanaged_repos(config)
+            table2 = get_info_table(config.get_base_path(),
+                                   outputs2,
+                                   options.data_only,
+                                   reverse=reverse,
+                                   unmanaged=True)
+            if table2 is not None and table2 != '':
+                print("\nAlso detected these repositories in the workspace, add using '%s set':\n\n%s" % (self.progname, table2))
 
         return 0
